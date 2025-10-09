@@ -273,8 +273,16 @@ class GitHubStatsMonitor:
 def main():
     """Main entry point"""
     # Configuration from environment variables
-    repos_str = os.getenv("GITHUB_REPOS", "basekick-labs/arc-core")
+    repos_str = os.getenv("GITHUB_REPOS")
+    if not repos_str:
+        logger.error("GITHUB_REPOS environment variable is required")
+        logger.error("Example: GITHUB_REPOS=owner/repo1,owner/repo2")
+        return 1
+
     repos = [r.strip() for r in repos_str.split(",") if r.strip()]
+    if not repos:
+        logger.error("No valid repositories found in GITHUB_REPOS")
+        return 1
 
     arc_url = os.getenv("ARC_URL", "http://localhost:8000")
     arc_token = os.getenv("ARC_TOKEN")
