@@ -19,7 +19,21 @@ import msgpack
 import gzip
 from datetime import datetime
 from typing import Dict, List, Optional
+from pathlib import Path
 import logging
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Load .env from the script's directory
+    env_path = Path(__file__).parent / '.env'
+    load_dotenv(dotenv_path=env_path)
+    logger_init = logging.getLogger(__name__)
+    if env_path.exists():
+        logger_init.info(f"Loaded environment from {env_path}")
+except ImportError:
+    # dotenv not installed, will use system environment variables only
+    pass
 
 # Configure logging
 logging.basicConfig(
