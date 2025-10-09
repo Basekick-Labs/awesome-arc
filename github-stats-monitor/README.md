@@ -161,30 +161,38 @@ Data is sent to Arc using the MessagePack format with the following structure:
 **Arc MessagePack Format:**
 ```python
 {
-    "m": "github_repo_stats",      # Required: measurement name
-    "t": "2025-10-09T14:20:00Z",  # Required: ISO8601 timestamp
+    "batch": [                          # Wrap records in "batch" array
+        {
+            "m": "github_repo_stats",   # Required: measurement name
+            "t": 1728481200000,          # Required: Unix timestamp in milliseconds
 
-    # Tags (dimensions) - string values
-    "repo": "basekick-labs/arc",
-    "owner": "basekick-labs",
-    "language": "python",
-    "default_branch": "main",
+            # Tags (dimensions) - nested in "tags" dict
+            "tags": {
+                "repo": "basekick-labs/arc",
+                "owner": "basekick-labs",
+                "language": "python",
+                "default_branch": "main"
+            },
 
-    # Fields (metrics) - numeric values
-    "stars": 245,
-    "watchers": 20,
-    "forks": 18,
-    "open_issues": 3,
-    "open_prs": 2,
-    "total_issues": 5,
-    "subscribers": 15,
-    "size_kb": 1024,
-    "network_count": 25,
-    "is_fork": 0,           # 0=false, 1=true
-    "is_archived": 0,
-    "has_issues": 1,
-    "has_wiki": 1,
-    "has_pages": 0
+            # Fields (metrics) - nested in "fields" dict, all numeric
+            "fields": {
+                "stars": 245.0,
+                "watchers": 20.0,
+                "forks": 18.0,
+                "open_issues": 3.0,
+                "open_prs": 2.0,
+                "total_issues": 5.0,
+                "subscribers": 15.0,
+                "size_kb": 1024.0,
+                "network_count": 25.0,
+                "is_fork": 0.0,         # 0=false, 1=true
+                "is_archived": 0.0,
+                "has_issues": 1.0,
+                "has_wiki": 1.0,
+                "has_pages": 0.0
+            }
+        }
+    ]
 }
 ```
 

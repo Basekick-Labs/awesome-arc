@@ -117,38 +117,42 @@ class GitHubStatsMonitor:
                         open_issues_count += 1
 
             # Extract relevant metrics (Arc MessagePack format)
-            # Arc expects: m=measurement, t=timestamp, then tags/fields as flat keys
+            # Arc expects: m=measurement, t=timestamp, tags={...}, fields={...}
             stats = {
                 "m": "github_repo_stats",                           # measurement
-                "t": datetime.now(timezone.utc).isoformat(),        # timestamp (timezone-aware)
+                "t": int(datetime.now(timezone.utc).timestamp() * 1000),  # timestamp in milliseconds
 
-                # Tags (dimensions) - string values
-                "repo": str(repo),
-                "owner": str(data.get("owner", {}).get("login", "unknown")),
-                "language": str(data.get("language") or "none"),
-                "default_branch": str(data.get("default_branch", "main")),
+                # Tags (dimensions) - nested in "tags" dict
+                "tags": {
+                    "repo": str(repo),
+                    "owner": str(data.get("owner", {}).get("login", "unknown")),
+                    "language": str(data.get("language") or "none"),
+                    "default_branch": str(data.get("default_branch", "main")),
+                },
 
-                # Fields (metrics) - ensure all are numeric (int or float)
-                "stars": int(data.get("stargazers_count") or 0),
-                "watchers": int(data.get("watchers_count") or 0),
-                "forks": int(data.get("forks_count") or 0),
-                "open_issues": int(open_issues_count),
-                "open_prs": int(open_prs_count),
-                "total_issues": int(data.get("open_issues_count") or 0),
-                "subscribers": int(data.get("subscribers_count") or 0),
-                "size_kb": int(data.get("size") or 0),
-                "network_count": int(data.get("network_count") or 0),
-                "is_fork": int(data.get("fork", False)),
-                "is_archived": int(data.get("archived", False)),
-                "has_issues": int(data.get("has_issues", False)),
-                "has_wiki": int(data.get("has_wiki", False)),
-                "has_pages": int(data.get("has_pages", False)),
+                # Fields (metrics) - nested in "fields" dict, all numeric
+                "fields": {
+                    "stars": float(data.get("stargazers_count") or 0),
+                    "watchers": float(data.get("watchers_count") or 0),
+                    "forks": float(data.get("forks_count") or 0),
+                    "open_issues": float(open_issues_count),
+                    "open_prs": float(open_prs_count),
+                    "total_issues": float(data.get("open_issues_count") or 0),
+                    "subscribers": float(data.get("subscribers_count") or 0),
+                    "size_kb": float(data.get("size") or 0),
+                    "network_count": float(data.get("network_count") or 0),
+                    "is_fork": float(1 if data.get("fork", False) else 0),
+                    "is_archived": float(1 if data.get("archived", False) else 0),
+                    "has_issues": float(1 if data.get("has_issues", False) else 0),
+                    "has_wiki": float(1 if data.get("has_wiki", False) else 0),
+                    "has_pages": float(1 if data.get("has_pages", False) else 0),
+                }
             }
 
             logger.info(
                 f"Fetched stats for {repo}: "
-                f"{stats['stars']} ⭐, {stats['forks']} 🍴, "
-                f"{stats['open_issues']} issues, {stats['open_prs']} PRs"
+                f"{stats['fields']['stars']:.0f} ⭐, {stats['fields']['forks']:.0f} 🍴, "
+                f"{stats['fields']['open_issues']:.0f} issues, {stats['fields']['open_prs']:.0f} PRs"
             )
 
             return stats
@@ -181,8 +185,19 @@ class GitHubStatsMonitor:
             return False
 
         try:
+            # Debug: Print first record to inspect data types
+            logger.info("=== DEBUG: First record being sent ===")
+            if records:
+                first_record = records[0]
+                logger.info(f"Record keys: {list(first_record.keys())}")
+                for key, value in first_record.items():
+                    logger.info(f"  {key}: {value!r} (type: {type(value).__name__})")
+
+            # Wrap records in "batch" key (Arc MessagePack format requirement)
+            payload = {"batch": records}
+
             # Serialize to MessagePack
-            packed_data = msgpack.packb(records)
+            packed_data = msgpack.packb(payload)
 
             # Compress with gzip
             compressed_data = gzip.compress(packed_data)
@@ -211,6 +226,12 @@ class GitHubStatsMonitor:
 
             return True
 
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP Error writing to Arc: {e}")
+            if e.response:
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response body: {e.response.text}")
+            return False
         except Exception as e:
             logger.error(f"Error writing to Arc: {e}")
             return False
