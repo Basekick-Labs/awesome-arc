@@ -156,26 +156,59 @@ sudo systemctl status github-monitor
 
 ### Measurement: `github_repo_stats`
 
-**Tags (Dimensions):**
-- `repo` - Repository name (e.g., "basekick-labs/arc-core")
-- `owner` - Repository owner
-- `language` - Primary language
-- `is_fork` - Whether repo is a fork
-- `is_archived` - Whether repo is archived
+Data is sent to Arc using the MessagePack format with the following structure:
 
-**Fields (Metrics):**
+**Arc MessagePack Format:**
+```python
+{
+    "m": "github_repo_stats",      # Required: measurement name
+    "t": "2025-10-09T14:20:00Z",  # Required: ISO8601 timestamp
+
+    # Tags (dimensions) - string values
+    "repo": "basekick-labs/arc",
+    "owner": "basekick-labs",
+    "language": "python",
+    "default_branch": "main",
+
+    # Fields (metrics) - numeric values
+    "stars": 245,
+    "watchers": 20,
+    "forks": 18,
+    "open_issues": 3,
+    "open_prs": 2,
+    "total_issues": 5,
+    "subscribers": 15,
+    "size_kb": 1024,
+    "network_count": 25,
+    "is_fork": 0,           # 0=false, 1=true
+    "is_archived": 0,
+    "has_issues": 1,
+    "has_wiki": 1,
+    "has_pages": 0
+}
+```
+
+**Tags (Dimensions - Strings):**
+- `repo` - Repository name (e.g., "basekick-labs/arc")
+- `owner` - Repository owner
+- `language` - Primary language (or "none")
+- `default_branch` - Default branch name
+
+**Fields (Metrics - Numbers):**
 - `stars` - Stargazers count
 - `watchers` - Watchers count
 - `forks` - Forks count
-- `open_issues` - Open issues count
+- `open_issues` - Open issues count (excluding PRs)
 - `open_prs` - Open pull requests count
 - `total_issues` - Total open issues (includes PRs)
 - `subscribers` - Subscribers count
 - `size_kb` - Repository size in KB
 - `network_count` - Network count
-- `has_issues` - Issues enabled
-- `has_wiki` - Wiki enabled
-- `has_pages` - GitHub Pages enabled
+- `is_fork` - Whether repo is a fork (0=false, 1=true)
+- `is_archived` - Whether repo is archived (0=false, 1=true)
+- `has_issues` - Issues enabled (0=false, 1=true)
+- `has_wiki` - Wiki enabled (0=false, 1=true)
+- `has_pages` - GitHub Pages enabled (0=false, 1=true)
 
 ## Querying Data
 

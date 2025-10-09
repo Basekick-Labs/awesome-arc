@@ -119,30 +119,30 @@ class GitHubStatsMonitor:
             # Extract relevant metrics (Arc MessagePack format)
             # Arc expects: m=measurement, t=timestamp, then tags/fields as flat keys
             stats = {
-                "m": "github_repo_stats",                    # measurement
-                "t": datetime.utcnow().isoformat() + "Z",   # timestamp
+                "m": "github_repo_stats",                           # measurement
+                "t": datetime.now(datetime.UTC).isoformat(),        # timestamp (timezone-aware)
 
                 # Tags (dimensions) - string values
-                "repo": repo,
-                "owner": data.get("owner", {}).get("login", "unknown"),
-                "language": data.get("language") or "none",  # None -> "none"
-                "default_branch": data.get("default_branch", "main"),
+                "repo": str(repo),
+                "owner": str(data.get("owner", {}).get("login", "unknown")),
+                "language": str(data.get("language") or "none"),
+                "default_branch": str(data.get("default_branch", "main")),
 
-                # Fields (metrics) - numeric/boolean values
-                "stars": data.get("stargazers_count", 0),
-                "watchers": data.get("watchers_count", 0),
-                "forks": data.get("forks_count", 0),
-                "open_issues": open_issues_count,
-                "open_prs": open_prs_count,
-                "total_issues": data.get("open_issues_count", 0),
-                "subscribers": data.get("subscribers_count", 0),
-                "size_kb": data.get("size", 0),
-                "network_count": data.get("network_count", 0),
-                "is_fork": 1 if data.get("fork", False) else 0,
-                "is_archived": 1 if data.get("archived", False) else 0,
-                "has_issues": 1 if data.get("has_issues", False) else 0,
-                "has_wiki": 1 if data.get("has_wiki", False) else 0,
-                "has_pages": 1 if data.get("has_pages", False) else 0,
+                # Fields (metrics) - ensure all are numeric (int or float)
+                "stars": int(data.get("stargazers_count") or 0),
+                "watchers": int(data.get("watchers_count") or 0),
+                "forks": int(data.get("forks_count") or 0),
+                "open_issues": int(open_issues_count),
+                "open_prs": int(open_prs_count),
+                "total_issues": int(data.get("open_issues_count") or 0),
+                "subscribers": int(data.get("subscribers_count") or 0),
+                "size_kb": int(data.get("size") or 0),
+                "network_count": int(data.get("network_count") or 0),
+                "is_fork": int(data.get("fork", False)),
+                "is_archived": int(data.get("archived", False)),
+                "has_issues": int(data.get("has_issues", False)),
+                "has_wiki": int(data.get("has_wiki", False)),
+                "has_pages": int(data.get("has_pages", False)),
             }
 
             logger.info(
