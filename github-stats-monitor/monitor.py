@@ -116,19 +116,19 @@ class GitHubStatsMonitor:
                     else:
                         open_issues_count += 1
 
-            # Extract relevant metrics
+            # Extract relevant metrics (Arc MessagePack format)
+            # Arc expects: m=measurement, t=timestamp, then tags/fields as flat keys
             stats = {
-                "measurement": "github_repo_stats",
-                "time": datetime.utcnow().isoformat() + "Z",
+                "m": "github_repo_stats",                    # measurement
+                "t": datetime.utcnow().isoformat() + "Z",   # timestamp
 
-                # Tags (dimensions)
+                # Tags (dimensions) - string values
                 "repo": repo,
                 "owner": data.get("owner", {}).get("login", "unknown"),
-                "language": data.get("language", "unknown"),
-                "is_fork": data.get("fork", False),
-                "is_archived": data.get("archived", False),
+                "language": data.get("language") or "none",  # None -> "none"
+                "default_branch": data.get("default_branch", "main"),
 
-                # Fields (metrics)
+                # Fields (metrics) - numeric/boolean values
                 "stars": data.get("stargazers_count", 0),
                 "watchers": data.get("watchers_count", 0),
                 "forks": data.get("forks_count", 0),
@@ -138,12 +138,11 @@ class GitHubStatsMonitor:
                 "subscribers": data.get("subscribers_count", 0),
                 "size_kb": data.get("size", 0),
                 "network_count": data.get("network_count", 0),
-
-                # Additional metadata
-                "default_branch": data.get("default_branch", "main"),
-                "has_issues": data.get("has_issues", False),
-                "has_wiki": data.get("has_wiki", False),
-                "has_pages": data.get("has_pages", False),
+                "is_fork": 1 if data.get("fork", False) else 0,
+                "is_archived": 1 if data.get("archived", False) else 0,
+                "has_issues": 1 if data.get("has_issues", False) else 0,
+                "has_wiki": 1 if data.get("has_wiki", False) else 0,
+                "has_pages": 1 if data.get("has_pages", False) else 0,
             }
 
             logger.info(
