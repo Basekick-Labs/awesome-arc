@@ -17,7 +17,7 @@ import time
 import requests
 import msgpack
 import gzip
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from pathlib import Path
 import logging
@@ -120,7 +120,7 @@ class GitHubStatsMonitor:
             # Arc expects: m=measurement, t=timestamp, then tags/fields as flat keys
             stats = {
                 "m": "github_repo_stats",                           # measurement
-                "t": datetime.now(datetime.UTC).isoformat(),        # timestamp (timezone-aware)
+                "t": datetime.now(timezone.utc).isoformat(),        # timestamp (timezone-aware)
 
                 # Tags (dimensions) - string values
                 "repo": str(repo),
