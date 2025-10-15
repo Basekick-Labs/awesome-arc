@@ -3,7 +3,7 @@
 GitHub Repository Stats Monitor
 
 Fetches repository statistics from GitHub API and writes them to Arc
-using MessagePack protocol for high-performance ingestion.
+using MessagePack columnar protocol for high-performance ingestion.
 
 Metrics collected:
 - Stars, watchers, forks
@@ -116,43 +116,37 @@ class GitHubStatsMonitor:
                     else:
                         open_issues_count += 1
 
-            # Extract relevant metrics (Arc MessagePack format)
-            # Arc expects: m=measurement, t=timestamp, tags={...}, fields={...}
+            # Extract relevant metrics (stored as individual values for columnar conversion)
             stats = {
-                "m": "github_repo_stats",                           # measurement
-                "t": int(datetime.now(timezone.utc).timestamp() * 1000),  # timestamp in milliseconds
+                "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
 
-                # Tags (dimensions) - nested in "tags" dict
-                "tags": {
-                    "repo": str(repo),
-                    "owner": str(data.get("owner", {}).get("login", "unknown")),
-                    "language": str(data.get("language") or "none"),
-                    "default_branch": str(data.get("default_branch", "main")),
-                },
+                # Tags (dimensions)
+                "repo": str(repo),
+                "owner": str(data.get("owner", {}).get("login", "unknown")),
+                "language": str(data.get("language") or "none"),
+                "default_branch": str(data.get("default_branch", "main")),
 
-                # Fields (metrics) - nested in "fields" dict, all numeric
-                "fields": {
-                    "stars": float(data.get("stargazers_count") or 0),
-                    "watchers": float(data.get("watchers_count") or 0),
-                    "forks": float(data.get("forks_count") or 0),
-                    "open_issues": float(open_issues_count),
-                    "open_prs": float(open_prs_count),
-                    "total_issues": float(data.get("open_issues_count") or 0),
-                    "subscribers": float(data.get("subscribers_count") or 0),
-                    "size_kb": float(data.get("size") or 0),
-                    "network_count": float(data.get("network_count") or 0),
-                    "is_fork": float(1 if data.get("fork", False) else 0),
-                    "is_archived": float(1 if data.get("archived", False) else 0),
-                    "has_issues": float(1 if data.get("has_issues", False) else 0),
-                    "has_wiki": float(1 if data.get("has_wiki", False) else 0),
-                    "has_pages": float(1 if data.get("has_pages", False) else 0),
-                }
+                # Fields (metrics)
+                "stars": float(data.get("stargazers_count") or 0),
+                "watchers": float(data.get("watchers_count") or 0),
+                "forks": float(data.get("forks_count") or 0),
+                "open_issues": float(open_issues_count),
+                "open_prs": float(open_prs_count),
+                "total_issues": float(data.get("open_issues_count") or 0),
+                "subscribers": float(data.get("subscribers_count") or 0),
+                "size_kb": float(data.get("size") or 0),
+                "network_count": float(data.get("network_count") or 0),
+                "is_fork": float(1 if data.get("fork", False) else 0),
+                "is_archived": float(1 if data.get("archived", False) else 0),
+                "has_issues": float(1 if data.get("has_issues", False) else 0),
+                "has_wiki": float(1 if data.get("has_wiki", False) else 0),
+                "has_pages": float(1 if data.get("has_pages", False) else 0),
             }
 
             logger.info(
                 f"Fetched stats for {repo}: "
-                f"{stats['fields']['stars']:.0f} ⭐, {stats['fields']['forks']:.0f} 🍴, "
-                f"{stats['fields']['open_issues']:.0f} issues, {stats['fields']['open_prs']:.0f} PRs"
+                f"{stats['stars']:.0f} ⭐, {stats['forks']:.0f} 🍴, "
+                f"{stats['open_issues']:.0f} issues, {stats['open_prs']:.0f} PRs"
             )
 
             return stats
@@ -172,7 +166,7 @@ class GitHubStatsMonitor:
 
     def write_to_arc(self, records: List[Dict]) -> bool:
         """
-        Write records to Arc using MessagePack protocol
+        Write records to Arc using MessagePack columnar protocol
 
         Args:
             records: List of metric records
@@ -185,16 +179,42 @@ class GitHubStatsMonitor:
             return False
 
         try:
-            # Debug: Print first record to inspect data types
-            logger.info("=== DEBUG: First record being sent ===")
+            # Convert row-oriented records to columnar format
+            # Columnar format: {"m": "measurement", "columns": {"col1": [val1, val2, ...], ...}}
+
+            # Initialize columns dict
+            columns = {}
+
+            # Get all column names from first record
             if records:
                 first_record = records[0]
-                logger.info(f"Record keys: {list(first_record.keys())}")
-                for key, value in first_record.items():
-                    logger.info(f"  {key}: {value!r} (type: {type(value).__name__})")
+                # Initialize each column as an empty list
+                for key in first_record.keys():
+                    if key == "timestamp":
+                        # Rename timestamp to time for Arc
+                        columns["time"] = []
+                    else:
+                        columns[key] = []
 
-            # Wrap records in "batch" key (Arc MessagePack format requirement)
-            payload = {"batch": records}
+            # Populate columns with values from all records
+            for record in records:
+                for key, value in record.items():
+                    if key == "timestamp":
+                        columns["time"].append(value)
+                    else:
+                        columns[key].append(value)
+
+            # Create columnar payload
+            payload = {
+                "m": "github_repo_stats",
+                "columns": columns
+            }
+
+            # Debug: Print columnar structure
+            logger.info("=== DEBUG: Columnar payload structure ===")
+            logger.info(f"Measurement: {payload['m']}")
+            logger.info(f"Columns: {list(payload['columns'].keys())}")
+            logger.info(f"Number of rows: {len(records)}")
 
             # Serialize to MessagePack
             packed_data = msgpack.packb(payload)
@@ -220,7 +240,7 @@ class GitHubStatsMonitor:
             response.raise_for_status()
 
             logger.info(
-                f"Successfully wrote {len(records)} records to Arc "
+                f"Successfully wrote {len(records)} records to Arc in columnar format "
                 f"(compressed: {len(compressed_data)} bytes)"
             )
 
