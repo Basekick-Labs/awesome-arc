@@ -125,20 +125,6 @@ Arc automatically handles schema changes:
 {"measurement": "cpu", "time": ..., "usage": 50.0, "temperature": 65.0}
 ```
 
-## Performance Benchmarks
-
-Arc's performance makes it ideal for high-volume time-series data:
-
-| Metric | Performance |
-|--------|-------------|
-| **Write Throughput** | 11.8M records/sec (MessagePack) |
-| **Compression** | 85% with ZSTD (after compaction) |
-| **Query Speed** | Sub-second for 100M+ rows |
-| **Latency** | <50ms per write request |
-| **Storage Efficiency** | ~100 bytes/record (Parquet) |
-
-*Benchmarks: Apple M3 Max, 14 cores, 36GB RAM*
-
 ## Project Structure
 
 ```
