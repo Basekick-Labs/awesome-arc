@@ -1,0 +1,21 @@
+2025-10-17 19:08:56,153 - __main__ - INFO - Initialized monitor for 1 repositories
+2025-10-17 19:08:56,153 - __main__ - INFO - Arc URL: https://arc.basekick.net, Database: github_repo_stats
+2025-10-17 19:08:56,153 - __main__ - INFO - Starting continuous monitoring (interval: 600s)
+2025-10-17 19:08:56,153 - __main__ - INFO - Starting collection cycle for 1 repositories
+2025-10-17 19:08:57,197 - __main__ - INFO - Fetched stats for basekick-labs/arc: 246 ⭐, 8 🍴, 2 issues, 0 PRs
+2025-10-17 19:08:58,201 - __main__ - INFO - === DEBUG: Columnar payload structure ===
+2025-10-17 19:08:58,201 - __main__ - INFO - Measurement: github_repo_stats
+2025-10-17 19:08:58,201 - __main__ - INFO - Columns: ['time', 'repo', 'owner', 'language', 'default_branch', 'stars', 'watchers', 'forks', 'open_issues', 'open_prs', 'total_issues', 'subscribers', 'size_kb', 'network_count', 'is_fork', 'is_archived', 'has_issues', 'has_wiki', 'has_pages']
+2025-10-17 19:08:58,201 - __main__ - INFO - Number of rows: 1
+2025-10-17 19:08:58,902 - __main__ - INFO - Successfully wrote 1 records to Arc in columnar format (compressed: 282 bytes)
+2025-10-17 19:08:58,903 - __main__ - INFO - Collection cycle complete: 1/1 successful
+2025-10-17 19:08:58,903 - __main__ - INFO - Sleeping for 600 seconds...
+Traceback (most recent call last):
+  File "/Users/nacho/dev/basekick-labs/awesome-arc/github-stats-monitor/monitor.py", line 353, in <module>
+    exit(main())
+         ^^^^^^
+  File "/Users/nacho/dev/basekick-labs/awesome-arc/github-stats-monitor/monitor.py", line 347, in main
+    monitor.run_forever(interval_seconds=interval)
+  File "/Users/nacho/dev/basekick-labs/awesome-arc/github-stats-monitor/monitor.py", line 310, in run_forever
+    time.sleep(interval_seconds)
+KeyboardInterrupt

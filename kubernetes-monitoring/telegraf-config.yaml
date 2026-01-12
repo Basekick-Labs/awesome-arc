@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+  namespace: monitoring
+data:
+  telegraf.conf: |
+    [agent]
+      interval = "10s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      precision = "0s"
+      hostname = "$HOSTNAME"
+      omit_hostname = false
+ 
+    # Arc output plugin
+    [[outputs.arc]]
+      url = "http://arc.monitoring.svc.cluster.local:8000/api/v1/write/msgpack"
+      api_key = "$ARC_TOKEN"
+      database = "kubernetes"
+      content_encoding = "gzip"
+ 
+    # Kubernetes metrics from Kubelet
+    [[inputs.kubernetes]]
+      url = "https://$HOSTIP:10250"
+      bearer_token = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      insecure_skip_verify = true
+ 
+    # Node-level system metrics
+    [[inputs.cpu]]
+      percpu = false
+      totalcpu = true
+      collect_cpu_time = false
+ 
+    [[inputs.mem]]
+ 
+    [[inputs.disk]]
+      ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+ 
+    [[inputs.diskio]]
+ 
+    [[inputs.net]]
+      ignore_protocol_stats = true
+ 
+    [[inputs.system]]

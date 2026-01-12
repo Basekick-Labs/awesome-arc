@@ -29,6 +29,7 @@ Whether you're evaluating Arc for your use case or learning time-series database
 | Project | Description | Metrics | Interval | Status |
 |---------|-------------|---------|----------|--------|
 | **[GitHub Stats Monitor](./github-stats-monitor/)** | Track repository statistics (stars, forks, issues, PRs) | 13+ metrics | 10 minutes | ✅ Ready |
+| **[Kubernetes Monitoring](./kubernetes-monitoring/)** | Monitor K8s clusters with Telegraf and Grafana | CPU, memory, disk, pods | 10 seconds | ✅ Ready |
 | **System Monitor** | Monitor server resources (CPU, memory, disk, network) | TBD | 1 minute | 🚧 Coming Soon |
 | **API Monitor** | Track HTTP endpoint health, latency, and errors | TBD | 30 seconds | 🚧 Coming Soon |
 | **Social Media Tracker** | Monitor social media metrics and engagement | TBD | 15 minutes | 🚧 Coming Soon |

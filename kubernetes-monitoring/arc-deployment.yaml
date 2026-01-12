@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: arc-data
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arc
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: arc
+  template:
+    metadata:
+      labels:
+        app: arc
+    spec:
+      containers:
+        - name: arc
+          image: ghcr.io/basekick-labs/arc:26.01.2
+          ports:
+            - containerPort: 8000
+          env:
+            - name: STORAGE_BACKEND
+              value: "local"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: arc-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: arc
+  namespace: monitoring
+spec:
+  selector:
+    app: arc
+  ports:
+    - port: 8000
+      targetPort: 8000

@@ -231,7 +231,7 @@ class GitHubStatsMonitor:
             }
 
             response = requests.post(
-                f"{self.arc_url}/write/v2/msgpack",
+                f"{self.arc_url}/write/v1/msgpack",
                 headers=headers,
                 data=compressed_data,
                 timeout=30
@@ -288,7 +288,7 @@ class GitHubStatsMonitor:
 
         return success_count
 
-    def run_forever(self, interval_seconds: int = 600):
+    def run_forever(self, interval_seconds: int = 3600):
         """
         Run monitoring loop forever
 
