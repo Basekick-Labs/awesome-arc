@@ -42,35 +42,19 @@ Whether you're evaluating Arc for your use case or learning time-series database
 
 - **Arc Core** running (local or remote)
   ```bash
-  git clone https://github.com/basekick-labs/arc
-  cd arc
-  ./start.sh native
+  # Docker (recommended)
+  docker run -d -p 8000:8000 ghcr.io/basekick-labs/arc:latest
   ```
+  See the [Arc documentation](https://github.com/basekick-labs/arc) for more installation options.
 
-- **Python 3.8+** for running examples
-
-- **Arc API Token**
+- **Arc API Token** - On first startup, Arc logs an admin token. Check the logs:
   ```bash
-  DB_PATH="./data/arc.db" python3 -c "
-  from api.auth import AuthManager
-  auth = AuthManager(db_path='./data/arc.db')
-  token = auth.create_token('showcase', description='Showcase projects')
-  print(f'Token: {token}')
-  "
+  docker logs <container-id> | grep "Initial admin"
   ```
 
 ### Run a Project
 
-Each project is self-contained with its own README:
-
-```bash
-# Example: GitHub Stats Monitor
-cd github-stats-monitor
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your configuration
-python3 monitor.py
-```
+Each project is self-contained with its own README. See individual project directories for specific instructions.
 
 ## Technology Stack
 
